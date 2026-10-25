@@ -17,7 +17,23 @@ def write(cfg, system: str, content: str, *, max_tokens: int = 4000):
     if not available():
         raise LLMUnavailable("Brak ANTHROPIC_API_KEY")
     client = anthropic.Anthropic()
-    resp = client.beta.messages.create(
+    try:
+        resp = _create(client, cfg, system, content, max_tokens)
+    except (anthropic.APIConnectionError, anthropic.APIStatusError) as exc:
+        # The report must still go out; the caller falls back to the template.
+        raise LLMUnavailable(f"API niedostępne: {exc.__class__.__name__}") from exc
+    if resp.stop_reason == "refusal":
+        raise LLMUnavailable("Model odmówił odpowiedzi")
+    text = "".join(b.text for b in resp.content if b.type == "text").strip()
+    if not text:
+        raise LLMUnavailable("Pusta odpowiedź modelu")
+    usage = {"model": resp.model, "input_tokens": resp.usage.input_tokens,
+             "output_tokens": resp.usage.output_tokens}
+    return text, usage
+
+
+def _create(client, cfg, system, content, max_tokens):
+    return client.beta.messages.create(
         model=cfg.model,
         max_tokens=max_tokens,
         system=system,
@@ -27,11 +43,3 @@ def write(cfg, system: str, content: str, *, max_tokens: int = 4000):
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",
     )
-    if resp.stop_reason == "refusal":
-        raise LLMUnavailable("Model odmówił odpowiedzi")
-    text = "".join(b.text for b in resp.content if b.type == "text").strip()
-    if not text:
-        raise LLMUnavailable("Pusta odpowiedź modelu")
-    usage = {"model": resp.model, "input_tokens": resp.usage.input_tokens,
-             "output_tokens": resp.usage.output_tokens}
-    return text, usage

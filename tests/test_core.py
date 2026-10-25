@@ -106,3 +106,12 @@ def test_phase0_run_without_api_key(env, monkeypatch):
     assert body.startswith("Raport poranny dla Test CIC")
     assert audit.verify(conn)[0]
     assert list((config.DATA_DIR / "backups").glob("cic-*.db"))
+
+
+def test_report_falls_back_when_api_unreachable(env, monkeypatch):
+    cfg, conn = env
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    monkeypatch.setenv("ANTHROPIC_BASE_URL", "http://127.0.0.1:9")
+    assert agents.run("A0", cfg=cfg, conn=conn) == "ok"
+    body = conn.execute("SELECT body FROM reports ORDER BY id DESC").fetchone()[0]
+    assert body.startswith("Raport poranny")
