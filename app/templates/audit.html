@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Dziennik{% endblock %}
+{% block content %}
+<h1>Dziennik audytowy</h1>
+{% if ok %}<p class="status">Łańcuch wpisów jest nienaruszony ({{ count }} wpisów).</p>
+{% else %}<p class="status"><span class="tag stop">Uwaga</span> Dziennik naruszony od wpisu {{ bad_id }}. Strażnik wstrzyma agentów przy najbliższym przebiegu.</p>{% endif %}
+<p>Wpisów nie da się zmienić ani usunąć. Każdy wpis zawiera skrót poprzedniego, więc każda ingerencja jest wykrywalna.</p>
+<div class="tbl"><table>
+  <caption>Ostatnie 200 wpisów, najnowsze na początku</caption>
+  <thead><tr><th scope="col">Nr</th><th scope="col">Czas (UTC)</th><th scope="col">Kto</th><th scope="col">Działanie</th><th scope="col">Wynik</th><th scope="col">Szczegóły</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr><td>{{ r.id }}</td><td>{{ r.ts[:19].replace('T', ' ') }}</td><td>{{ r.actor }}</td><th scope="row">{{ r.action }}</th><td>{{ r.outcome or '' }}</td><td><code>{{ (r.details or '')[:300] }}</code></td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

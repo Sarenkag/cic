@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Panel{% endblock %} · {{ cic.name }}</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<a class="skip" href="#tresc">Przejdź do treści</a>
+<header class="site">
+  <div class="in">
+    <p class="brand">{{ cic.name }}</p>
+    <nav aria-label="Główne menu">
+      {% set p = request.url.path %}
+      <ul>
+        <li><a href="/" {% if p == '/' %}aria-current="page"{% endif %}>Raport</a></li>
+        <li><a href="/zatwierdzenia" {% if p.startswith('/zatwierdzenia') %}aria-current="page"{% endif %}>Zatwierdzenia ({{ counts.zatwierdzenia }})</a></li>
+        <li><a href="/terminy" {% if p.startswith('/terminy') %}aria-current="page"{% endif %}>Terminy</a></li>
+        <li><a href="/zadania" {% if p.startswith('/zadania') %}aria-current="page"{% endif %}>Zadania</a></li>
+        <li><a href="/alarmy" {% if p.startswith('/alarmy') %}aria-current="page"{% endif %}>Alarmy ({{ counts.alarmy }})</a></li>
+        <li><a href="/agenci" {% if p.startswith('/agenci') %}aria-current="page"{% endif %}>Agenci</a></li>
+        <li><a href="/dziennik" {% if p.startswith('/dziennik') %}aria-current="page"{% endif %}>Dziennik</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="tresc" tabindex="-1">
+  {% if msg %}<p class="status" role="status">{{ msg }}</p>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Alarmy{% endblock %}
+{% block content %}
+<h1>Alarmy</h1>
+{% if rows %}
+<div class="tbl"><table>
+  <caption>Alarmy, otwarte na początku</caption>
+  <thead><tr><th scope="col">Treść</th><th scope="col">Waga</th><th scope="col">Agent</th><th scope="col">Działanie</th></tr></thead>
+  <tbody>
+  {% for a in rows %}
+    <tr>
+      <th scope="row">{{ a.message }}<br><span class="muted">{{ a.created[:16].replace('T', ' ') }} UTC</span></th>
+      <td><span class="tag {{ 'stop' if a.severity in ('krytyczny', 'wysoki') else 'warn' }}">{{ a.severity }}</span></td>
+      <td>{{ a.agent }}</td>
+      <td>{% if a.resolved_at %}zamknięty przez {{ a.resolved_by }}{% else %}<form class="inline" method="post" action="/alarmy/{{ a.id }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Zamknij alarm: {{ a.message[:60] }}</button></form>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}<p>Brak alarmów.</p>{% endif %}
+{% endblock %}

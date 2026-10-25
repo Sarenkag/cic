@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Zadania{% endblock %}
+{% block content %}
+<h1>Zadania</h1>
+{% if rows %}
+<div class="tbl"><table>
+  <caption>Zadania dla ludzi i agentów</caption>
+  <thead><tr><th scope="col">Zadanie</th><th scope="col">Kto</th><th scope="col">Stan</th><th scope="col">Działanie</th></tr></thead>
+  <tbody>
+  {% for t in rows %}
+    <tr>
+      <th scope="row">{{ t.title }}</th><td>{{ t.owner }}</td>
+      <td>{% if t.status == 'zrobione' %}<span class="tag ok">zrobione</span>{% else %}otwarte{% endif %}</td>
+      <td><form class="inline" method="post" action="/zadania/{{ t.id }}"><input type="hidden" name="csrf" value="{{ csrf }}">
+        {% if t.status == 'zrobione' %}<button name="status" value="otwarte">Otwórz ponownie: {{ t.title }}</button>
+        {% else %}<button name="status" value="zrobione">Oznacz jako zrobione: {{ t.title }}</button>{% endif %}
+      </form></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}<p>Brak zadań. Uruchom agenta Ład w sekcji <a href="/agenci">Agenci</a>.</p>{% endif %}
+{% endblock %}

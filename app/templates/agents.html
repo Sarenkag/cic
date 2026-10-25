@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Agenci{% endblock %}
+{% block content %}
+<h1>Agenci</h1>
+<p>Każdy dyrektor może od razu wstrzymać agenta. Wznowienie wymaga zgody dwóch dyrektorów.</p>
+<form class="inline" method="post" action="/agenci/wszyscy/wstrzymaj">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label for="reason-all">Powód</label> <input type="text" id="reason-all" name="reason">
+  <button class="danger">Wstrzymaj wszystkich agentów</button>
+</form>
+<div class="cards" style="margin-top:20px">
+{% for a in agents %}{% set s = state.get(a.code) %}
+  <section class="card" aria-labelledby="ag-{{ a.code }}">
+    <h2 id="ag-{{ a.code }}">{{ a.name }} ({{ a.code }})</h2>
+    <p>{{ a.role }}</p>
+    <p>
+      {% if a.code not in implemented %}<span class="tag warn">planowany, faza {{ a.phase }}</span>
+      {% elif s and s.paused %}<span class="tag stop">wstrzymany</span> {{ s.reason or '' }}
+      {% else %}<span class="tag ok">aktywny</span>{% endif %}
+    </p>
+    {% if s and s.last_run %}<p class="muted">Ostatnio: {{ s.last_run[:16].replace('T', ' ') }} UTC, {{ s.last_status }}</p>{% endif %}
+    {% if a.code in implemented %}
+      <form class="inline" method="post" action="/agenci/{{ a.code }}/uruchom"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Uruchom teraz: {{ a.name }}</button></form>
+      {% if s and s.paused %}
+        <form class="inline" method="post" action="/agenci/{{ a.code }}/wznow"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary">Poproś o wznowienie: {{ a.name }}</button></form>
+      {% else %}
+        <form class="inline" method="post" action="/agenci/{{ a.code }}/wstrzymaj"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="danger">Wstrzymaj: {{ a.name }}</button></form>
+      {% endif %}
+    {% endif %}
+  </section>
+{% endfor %}
+</div>
+{% endblock %}

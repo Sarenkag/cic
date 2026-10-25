@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Zatwierdzenia{% endblock %}
+{% block content %}
+<h1>Zatwierdzenia</h1>
+<p>Agenci tylko przygotowują. Płatności i zgłoszenia urzędowe wykonuje dyrektor sam, po zatwierdzeniu.</p>
+<h2>Czeka na decyzję ({{ pending|length }})</h2>
+{% if not pending %}<p>Nic nie czeka na decyzję.</p>{% endif %}
+<div class="cards">
+{% for a in pending %}
+  <section class="card" aria-labelledby="ap-{{ a.id }}">
+    <h3 id="ap-{{ a.id }}">{{ a.title }}</h3>
+    <p><span class="tag {{ 'stop' if a.level == 3 else 'warn' }}">Poziom {{ a.level }}: {{ LEVEL_NAMES[a.level] }}</span></p>
+    {% if a.detail %}<p>{{ a.detail }}</p>{% endif %}
+    {% if a.amount_pence %}<p>Kwota: £{{ '%.2f' % (a.amount_pence / 100) }}</p>{% endif %}
+    <p class="muted">Od: {{ a.agent }}, {{ a.created[:16].replace('T', ' ') }} UTC.
+      Głosy: {{ votes.get(a.id, [])|length }} z {{ a.required }} potrzebnych{% for v in votes.get(a.id, []) %}{% if loop.first %} ({% endif %}{{ v.user }}: {{ v.vote }}{% if not loop.last %}, {% else %}){% endif %}{% endfor %}.</p>
+    <form class="inline" method="post" action="/zatwierdzenia/{{ a.id }}">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button class="primary" name="decision" value="tak">Zatwierdź: {{ a.title }}</button>
+      <button class="danger" name="decision" value="nie">Odrzuć: {{ a.title }}</button>
+    </form>
+  </section>
+{% endfor %}
+</div>
+<h2>Ostatnio rozstrzygnięte</h2>
+{% if done %}
+<div class="tbl"><table>
+  <caption>Ostatnie 30 decyzji</caption>
+  <thead><tr><th scope="col">Sprawa</th><th scope="col">Status</th><th scope="col">Data</th></tr></thead>
+  <tbody>{% for a in done %}<tr><th scope="row">{{ a.title }}</th><td>{{ a.status }}</td><td>{{ (a.decided or '')[:10] }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}<p>Brak.</p>{% endif %}
+{% endblock %}

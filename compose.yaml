@@ -1,0 +1,31 @@
+# Kontener "cic" w projekcie "protosystem".
+# Uruchomienie: docker compose up -d --build
+name: protosystem
+
+services:
+  cic:
+    build: .
+    image: protosystem/cic:latest
+    container_name: cic
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - cic-data:/data
+      - ./config/cic.yaml:/app/config/cic.yaml:ro
+    ports:
+      # Panel tylko na localhost VPS. Z zewnątrz: przez reverse proxy z HTTPS albo tunel SSH.
+      - "127.0.0.1:${CIC_PORT:-8080}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "5"}
+
+volumes:
+  cic-data:

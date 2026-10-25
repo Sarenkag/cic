@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Raport poranny{% endblock %}
+{% block content %}
+<h1>Raport poranny</h1>
+<p class="muted">Zalogowano jako {{ user_name }}.</p>
+{% if report %}
+  <p class="muted">Przygotowany {{ report.created[:16].replace('T', ' ') }} UTC przez Koordynatora.</p>
+  <div class="report" aria-label="Treść raportu">{{ report.body }}</div>
+{% else %}
+  <p>Nie ma jeszcze raportu. Koordynator przygotowuje go codziennie o {{ cic.schedule.get('koordynator', '08:00') }}. Możesz go uruchomić teraz w sekcji <a href="/agenci">Agenci</a>.</p>
+{% endif %}
+<h2>Najbliższe terminy</h2>
+{% if deadlines %}
+<ul>
+  {% for d in deadlines %}<li>{{ d.title }}: {{ d.due }} ({{ (d.due | todate - today).days }} dni)</li>{% endfor %}
+</ul>
+<p><a href="/terminy">Wszystkie terminy</a></p>
+{% else %}
+<p>Brak terminów. Pojawią się po wpisaniu daty rejestracji spółki w konfiguracji.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,54 @@
+# Testy na GitHubie, potem wdrożenie kontenera "cic" na VPS przez runnera "midgard".
+# Sekrety repozytorium (opcjonalne): CIC_PANEL_PASSWORD (hasło do panelu, tylko przy pierwszej
+# instalacji), ANTHROPIC_API_KEY. Pliku .env na serwerze workflow nigdy nie nadpisuje.
+name: Wdrożenie CIC
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cic-deploy
+  cancel-in-progress: false
+jobs:
+  testy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q -r requirements.txt pytest
+      - run: python -m pytest -q
+
+  wdrozenie:
+    needs: testy
+    runs-on: [self-hosted, midgard]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skopiuj kod do ~/protosystem/cic (bez .env)
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="$HOME/protosystem/cic"
+          mkdir -p "$target"
+          tar --exclude=.git --exclude=.env -cf - . | tar -xf - -C "$target"
+          echo "Katalog: $target"
+      - name: Zainstaluj i uruchom
+        shell: bash
+        env:
+          CIC_PANEL_PASSWORD: ${{ secrets.CIC_PANEL_PASSWORD }}
+          ANTHROPIC_API_KEY_INIT: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -euo pipefail
+          cd "$HOME/protosystem/cic"
+          ./install.sh </dev/null
+      - name: Sprawdź stan
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker ps --filter name='^cic$' --format '{{.Names}} {{.Status}}'
+          test "$(docker inspect -f '{{.State.Health.Status}}' cic)" = healthy
+          docker exec cic python -m app.cli verify
